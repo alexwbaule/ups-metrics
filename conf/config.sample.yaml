@@ -1,0 +1,10 @@
+device:
+  interval: 10s
+  address: ups-storage
+  login:
+    username: admin
+    password: 123456
+influxdb:
+  address: influx
+  port: 8086
+  database: ups
