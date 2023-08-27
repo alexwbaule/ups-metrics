@@ -2,11 +2,13 @@ package metric
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/alexwbaule/ups-metrics/internal/application"
 	"github.com/alexwbaule/ups-metrics/internal/application/logger"
 	"github.com/alexwbaule/ups-metrics/internal/domain/entity/device"
 	"github.com/alexwbaule/ups-metrics/internal/resource/http/client"
+	"net/url"
 	"time"
 )
 
@@ -17,6 +19,7 @@ type GetMetric struct {
 	client   *client.Client
 	loginusr device.Login
 	auth     device.Authentication
+	maxTry   int
 }
 
 func NewMetric(l *application.Application, j chan<- device.Metric) *GetMetric {
@@ -24,8 +27,9 @@ func NewMetric(l *application.Application, j chan<- device.Metric) *GetMetric {
 		log:      l.Log,
 		intv:     l.Config.GetInterval(),
 		jobs:     j,
-		client:   client.New(l.Config, fmt.Sprintf("https://%s", l.Config.GetDeviceAddress())),
+		client:   client.New(l.Config, fmt.Sprintf("https://%s", l.Config.GetDeviceAddress()), l.Log),
 		loginusr: l.Config.GetLogin(),
+		maxTry:   l.Config.GetHttpClient().RetryCount,
 	}
 }
 
@@ -33,7 +37,7 @@ func (g *GetMetric) Run(ctx context.Context) error {
 	ticker := time.NewTicker(g.intv)
 	defer ticker.Stop()
 
-	err := g.login(ctx)
+	err := g.login(ctx, 1)
 	if err != nil {
 		return err
 	}
@@ -74,17 +78,20 @@ func (g *GetMetric) getStats(ctx context.Context) error {
 		return fmt.Errorf("error: %s", get.String())
 	}
 	if metrics.ResponseStatus != "S001" {
-		g.log.Errorf("token error: %s", client.ErrorCodes(metrics.ResponseStatus))
-		err := g.login(ctx)
+		g.log.Errorf("token error: [%s]", client.ErrorCodes(metrics.ResponseStatus))
+		g.log.Errorf("metrics error: [%#v]", metrics)
+
+		err := g.login(ctx, 1)
 		if err != nil {
 			return err
 		}
 	}
+	metrics.GetAt = time.Now()
 	g.jobs <- metrics
 	return nil
 }
 
-func (g *GetMetric) login(ctx context.Context) error {
+func (g *GetMetric) login(ctx context.Context, retryCount int) error {
 	request := client.Request{
 		Url:            "/sms/mobile/login/",
 		PathParameters: nil,
@@ -96,16 +103,30 @@ func (g *GetMetric) login(ctx context.Context) error {
 			"sodevice": "android",
 		},
 	}
-
 	get, err := g.client.Post(ctx, request, nil, &g.auth)
 	if err != nil {
-		return err
+		return g.backoff(ctx, retryCount, err)
 	}
 	if get.IsError() {
-		return fmt.Errorf("error: %s", get.String())
+		return g.backoff(ctx, retryCount, get.Error().(error))
 	}
 	if g.auth.ResponseStatus != "S001" {
 		return fmt.Errorf("login error: %s", client.ErrorCodes(g.auth.ResponseStatus))
 	}
 	return nil
+}
+
+func (g *GetMetric) backoff(ctx context.Context, retryCount int, err error) error {
+	var urlError *url.Error
+
+	if retryCount == g.maxTry {
+		return err
+	}
+	if errors.As(err, &urlError) {
+		if urlError.Timeout() {
+			g.log.Infof("Trying again (%d)(%d)...", retryCount, g.maxTry)
+			return g.login(ctx, retryCount+1)
+		}
+	}
+	return err
 }

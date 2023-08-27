@@ -9,7 +9,6 @@ import (
 	"github.com/alexwbaule/ups-metrics/internal/domain/entity/influx"
 	"github.com/alexwbaule/ups-metrics/internal/resource/http/client"
 	"strings"
-	"time"
 )
 
 type Worker struct {
@@ -23,7 +22,7 @@ func NewWorker(l *application.Application) *Worker {
 	return &Worker{
 		log:    l.Log,
 		influx: iflx,
-		client: client.New(l.Config, fmt.Sprintf("http://%s:%s", iflx.Address, iflx.Port)),
+		client: client.New(l.Config, fmt.Sprintf("http://%s:%s", iflx.Address, iflx.Port), l.Log),
 	}
 }
 
@@ -59,13 +58,13 @@ func (w *Worker) write(ctx context.Context, metric device.Metric) error {
 
 	for _, gauge := range metric.Gauges {
 		if influx.UPSMetricName(gauge.Name) != "" {
-			body.WriteString(fmt.Sprintf("%s,host=%s value=%s %d\n", influx.UPSMetricName(gauge.Name), metric.DeployName, gauge.Phases.Value, time.Now().UnixNano()))
+			body.WriteString(fmt.Sprintf("%s,host=%s value=%s %d\n", influx.UPSMetricName(gauge.Name), metric.DeployName, gauge.Phases.Value, metric.GetAt.UnixNano()))
 		}
 	}
 
 	for _, state := range metric.States {
 		if influx.UPSMetricState(state.Name) != "" {
-			body.WriteString(fmt.Sprintf("ups_status,state=%s,host=%s value=%v %d\n", influx.UPSMetricState(state.Name), metric.DeployName, state.Value, time.Now().UnixNano()))
+			body.WriteString(fmt.Sprintf("ups_status,state=%s,host=%s value=%v %d\n", influx.UPSMetricState(state.Name), metric.DeployName, state.Value, metric.GetAt.UnixNano()))
 		}
 	}
 

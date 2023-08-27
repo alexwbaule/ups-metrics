@@ -42,13 +42,14 @@ type Login struct {
 }
 
 type Metric struct {
-	ResponseStatus string   `json:"responseStatus"`
-	UPSType        string   `json:"tipoUPS"`
-	Gauges         []Gauges `json:"medidores"`
-	States         []States `json:"estados"`
-	DeployID       string   `json:"deployId"`
-	DeployName     string   `json:"deployName"`
-	Alert24HState  string   `json:"alerta24hState"`
+	ResponseStatus string    `json:"responseStatus"`
+	UPSType        string    `json:"tipoUPS"`
+	Gauges         []Gauges  `json:"medidores"`
+	States         []States  `json:"estados"`
+	DeployID       string    `json:"deployId"`
+	DeployName     string    `json:"deployName"`
+	Alert24HState  string    `json:"alerta24hState"`
+	GetAt          time.Time `json:"GetAt"`
 }
 type Phases struct {
 	Value string `json:"valor"`

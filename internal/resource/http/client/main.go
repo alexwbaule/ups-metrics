@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"github.com/alexwbaule/ups-metrics/internal/application/config"
+	"github.com/alexwbaule/ups-metrics/internal/application/logger"
 	"github.com/go-resty/resty/v2"
 	"net"
 	"net/http"
@@ -27,7 +28,7 @@ type Response struct {
 	*resty.Response
 }
 
-func New(cfg *config.Config, baseUrl string) *Client {
+func New(cfg *config.Config, baseUrl string, l *logger.Logger) *Client {
 	client := resty.New()
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
@@ -51,8 +52,24 @@ func New(cfg *config.Config, baseUrl string) *Client {
 			func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
 				return 0, errors.New("quota exceeded")
 			}).
+		SetLogger(l).
 		SetRetryCount(cfg.GetHttpClient().RetryCount).
 		SetRetryWaitTime(cfg.GetHttpClient().RetryWaitCount).
+		SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
+			return 0, errors.New("quota exceeded")
+		}).
+		AddRetryCondition(func(response *resty.Response, err error) bool {
+			l.Infof("Response: [%#v]", response.StatusCode())
+			l.Infof("Response: [%#v]", response.Status())
+			l.Infof("Response: [%#v]", response.Error())
+			l.Infof("Response: [%#v]", response.IsSuccess())
+			l.Infof("Response: [%#v]", response.Result())
+
+			l.Infof("Error: [%#v]", err)
+			return response.StatusCode() == http.StatusRequestTimeout ||
+				response.StatusCode() >= http.StatusInternalServerError ||
+				response.StatusCode() == http.StatusGatewayTimeout
+		}).
 		SetRetryMaxWaitTime(cfg.GetHttpClient().RetryMaxWaitTime)
 
 	return &Client{client}
