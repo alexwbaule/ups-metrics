@@ -59,13 +59,6 @@ func New(cfg *config.Config, baseUrl string, l *logger.Logger) *Client {
 			return 0, errors.New("quota exceeded")
 		}).
 		AddRetryCondition(func(response *resty.Response, err error) bool {
-			l.Infof("Response: [%#v]", response.StatusCode())
-			l.Infof("Response: [%#v]", response.Status())
-			l.Infof("Response: [%#v]", response.Error())
-			l.Infof("Response: [%#v]", response.IsSuccess())
-			l.Infof("Response: [%#v]", response.Result())
-
-			l.Infof("Error: [%#v]", err)
 			return response.StatusCode() == http.StatusRequestTimeout ||
 				response.StatusCode() >= http.StatusInternalServerError ||
 				response.StatusCode() == http.StatusGatewayTimeout

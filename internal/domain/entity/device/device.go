@@ -5,7 +5,13 @@ import "time"
 type Config struct {
 	Device `mapstructure:"device"`
 	Influx `mapstructure:"influxdb"`
+	Gelf   `mapstructure:"gelf"`
 }
+type Gelf struct {
+	Address string `mapstructure:"address"`
+	Port    string `mapstructure:"port"`
+}
+
 type Influx struct {
 	Address  string `mapstructure:"address"`
 	Port     string `mapstructure:"port"`
@@ -39,6 +45,16 @@ type HttpClient struct {
 type Login struct {
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
+}
+
+type Notifications struct {
+	ResponseStatus string         `json:"responseStatus"`
+	Notifications  []Notification `json:"notificacoes"`
+}
+type Notification struct {
+	ID      int    `json:"id"`
+	Message string `json:"msg"`
+	Date    string `json:"data"`
 }
 
 type Metric struct {

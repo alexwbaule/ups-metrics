@@ -30,10 +30,10 @@ func (w *Worker) Run(ctx context.Context, jobs <-chan device.Metric) error {
 	for {
 		select {
 		case <-ctx.Done():
-			w.log.Infof("Stopping worker job...")
+			w.log.Infof("stopping worker job...")
 			return context.Canceled
 		case item := <-jobs:
-			w.log.Infof("Sending metrics to %s on database %s", w.influx.Address, w.influx.Database)
+			w.log.Infof("sending metrics to %s on database %s", w.influx.Address, w.influx.Database)
 			err := w.write(ctx, item)
 			if err != nil {
 				w.log.Errorf("worker error: %s", err.Error())

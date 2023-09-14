@@ -48,6 +48,15 @@ func NewDefaultConfig() (*Config, error) {
 	}, err
 }
 
+func SaveLastIdConfig(id int) error {
+	viper.Set("last", id)
+	return viper.WriteConfig()
+}
+
+func (c *Config) GetLastKnowId() int {
+	return viper.GetInt("last")
+}
+
 func (c *Config) GetLogLevel() string {
 	return c.device.LogLevel
 }
@@ -61,6 +70,10 @@ func (c *Config) GetLogin() device.Login {
 
 func (c *Config) GetMetricConfig() device.Influx {
 	return c.device.Influx
+}
+
+func (c *Config) GetGelfConfig() device.Gelf {
+	return c.device.Gelf
 }
 
 func (c *Config) GetDeviceAddress() string {

@@ -1,10 +1,14 @@
 device:
   interval: 10s
-  address: ups-storage
+  address: example.ups
   login:
     username: admin
     password: 123456
 influxdb:
-  address: influx
+  address: example.influx
   port: 8086
   database: ups
+graylog:
+    gelf:
+      address: example.graylog
+      port: 12201

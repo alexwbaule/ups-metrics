@@ -1,0 +1,27 @@
+#!/bin/sh +x
+
+. /etc/rc.subr
+
+name=ups_metrics
+rcvar=ups_metrics_enable
+ups_metrics_chdir="/root/ups_metrics"
+command="/root/ups_metrics/${name}"
+pidfile="/var/run/ups_metrics.pid"
+
+stop_cmd="ups_metrics_shutdown"
+
+ups_metrics_shutdown()
+{
+	if [ -e "${pidfile}" ]; then
+		echo "Stopping ${name} process."
+		kill -s TERM `cat ${pidfile}`
+	fi
+}
+
+
+load_rc_config $name
+: ${ups_metrics_enable:=no}
+
+start_cmd="cd /root/ups_metrics && /usr/sbin/daemon -m 3 -t ${name} -p $pidfile -u root -o /var/log/ups_metrics.log ./ups_metrics"
+
+run_rc_command "$1"
