@@ -8,7 +8,6 @@ influxdb:
   address: example.influx
   port: 8086
   database: ups
-graylog:
-    gelf:
-      address: example.graylog
-      port: 12201
+gelf:
+  address: example.graylog
+  port: 12201

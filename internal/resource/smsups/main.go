@@ -53,6 +53,7 @@ func (g *SMSUps) Login(ctx context.Context, retryCount int) error {
 		},
 	}
 	get, err := g.client.Post(ctx, request, nil, &g.auth)
+	g.print(get)
 	if err != nil {
 		return g.backoffLogin(ctx, retryCount, err)
 	}
@@ -80,6 +81,7 @@ func (g *SMSUps) notifications(ctx context.Context, retryCount int) (device.Noti
 		},
 	}
 	get, err := g.client.Get(ctx, request, &notifications)
+	g.print(get)
 	if err != nil {
 		return g.backoffNotification(ctx, retryCount, err)
 	}
@@ -111,6 +113,8 @@ func (g *SMSUps) medidores(ctx context.Context, retryCount int) (device.Metric, 
 		QueryParameters: nil,
 	}
 	get, err := g.client.Get(ctx, request, &metrics)
+	g.print(get)
+
 	if err != nil {
 		return g.backoffMetric(ctx, retryCount, err)
 	}
@@ -173,4 +177,15 @@ func (g *SMSUps) backoffLogin(ctx context.Context, retryCount int, err error) er
 		}
 	}
 	return fmt.Errorf("max login retry reached")
+}
+
+func (g *SMSUps) print(get *client.Response) {
+	debug := fmt.Sprintf("curl -X %s \"%s\" ", get.Request.Method, get.Request.URL)
+	for s, header := range get.Request.Header {
+		if s == "User-Agent" {
+			continue
+		}
+		debug += fmt.Sprintf("--header \"%s: %s\" ", s, header[0])
+	}
+	g.log.Debug(debug)
 }
