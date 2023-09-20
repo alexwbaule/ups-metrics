@@ -58,17 +58,20 @@ func (w *Worker) write(ctx context.Context, metric device.Metric) error {
 
 	for _, gauge := range metric.Gauges {
 		if influx.UPSMetricName(gauge.Name) != "" {
-			body.WriteString(fmt.Sprintf("%s,host=%s value=%s %d\n", influx.UPSMetricName(gauge.Name), metric.DeployName, gauge.Phases.Value, metric.GetAt.UnixNano()))
+			body.WriteString(fmt.Sprintf("%s,host=%s value=%s %d\n",
+				influx.UPSMetricName(gauge.Name), metric.DeployName, gauge.Phases.Value, metric.GetAt.UnixNano()))
 		}
 	}
 
 	for _, state := range metric.States {
 		if influx.UPSMetricState(state.Name) != "" {
-			body.WriteString(fmt.Sprintf("ups_status,state=%s,host=%s value=%v %d\n", influx.UPSMetricState(state.Name), metric.DeployName, state.Value, metric.GetAt.UnixNano()))
+			body.WriteString(fmt.Sprintf("%s,host=%s value=\"%s\" %d\n",
+				influx.UPSMetricState(state.Name), metric.DeployName, influx.UPSMetricStateValue(state.Name, state.Value), metric.GetAt.UnixNano()))
 		}
 	}
 
 	get, err := w.client.Post(ctx, request, body.String(), &response)
+	w.print(get)
 	if err != nil {
 		return err
 	}
@@ -79,4 +82,15 @@ func (w *Worker) write(ctx context.Context, metric device.Metric) error {
 		return fmt.Errorf("error: %s", get.String())
 	}
 	return nil
+}
+
+func (w *Worker) print(get *client.Response) {
+	debug := fmt.Sprintf("curl -X %s \"%s\" -d '%+v' ", get.Request.Method, get.Request.URL, get.Request.Body)
+	for s, header := range get.Request.Header {
+		if s == "User-Agent" {
+			continue
+		}
+		debug += fmt.Sprintf("--header \"%s: %s\" ", s, header[0])
+	}
+	w.log.Debug(debug)
 }
