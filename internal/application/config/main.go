@@ -14,9 +14,9 @@ var (
 	defaultMaxIdleConnsPerHost   = 10
 	defaultDialTimeout           = 500 * time.Millisecond
 	defaultDialKeepAlive         = 90 * time.Second
-	defaultResponseHeaderTimeout = 10 * time.Second
-	defaultTLSHandshakeTimeout   = 10 * time.Second
-	defaultExpectContinueTimeout = 10 * time.Second
+	defaultResponseHeaderTimeout = 15 * time.Second
+	defaultTLSHandshakeTimeout   = 15 * time.Second
+	defaultExpectContinueTimeout = 15 * time.Second
 	defaultRetryCount            = 3
 	defaultRetryWaitCount        = 100 * time.Millisecond
 	defaultRetryMaxWaitTime      = 500 * time.Millisecond

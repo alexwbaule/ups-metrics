@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"github.com/alexwbaule/ups-metrics/internal/application/config"
 	"github.com/alexwbaule/ups-metrics/internal/application/logger"
 	"github.com/go-resty/resty/v2"
@@ -50,18 +49,16 @@ func New(cfg *config.Config, baseUrl string, l *logger.Logger) *Client {
 		SetTransport(transport).
 		SetRetryAfter(
 			func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
-				return 0, errors.New("quota exceeded")
+				return 0, nil
 			}).
 		SetLogger(l).
 		SetRetryCount(cfg.GetHttpClient().RetryCount).
 		SetRetryWaitTime(cfg.GetHttpClient().RetryWaitCount).
-		SetRetryAfter(func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
-			return 0, errors.New("quota exceeded")
-		}).
 		AddRetryCondition(func(response *resty.Response, err error) bool {
 			return response.StatusCode() == http.StatusRequestTimeout ||
 				response.StatusCode() >= http.StatusInternalServerError ||
-				response.StatusCode() == http.StatusGatewayTimeout
+				response.StatusCode() == http.StatusGatewayTimeout ||
+				err != nil
 		}).
 		SetRetryMaxWaitTime(cfg.GetHttpClient().RetryMaxWaitTime)
 
