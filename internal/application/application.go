@@ -23,7 +23,7 @@ func NewApplication() *Application {
 
 	cfg, err := config.NewDefaultConfig()
 	if err != nil {
-		log.Errorf("error opening config (%s): %s", err)
+		log.Errorf("error opening config (%s)", err)
 		os.Exit(-1)
 	}
 	log.SetLevel(cfg.GetLogLevel())
