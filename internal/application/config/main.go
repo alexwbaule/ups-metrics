@@ -27,17 +27,19 @@ type Config struct {
 }
 
 const defaultConfig = `conf/config.yaml`
+const defaultCountConfig = `conf/count.yaml`
 
 func NewDefaultConfig() (*Config, error) {
+	v := viper.New()
 	var config device.Config
 
-	viper.SetConfigType("yaml")
-	viper.SetConfigFile(defaultConfig)
-	err := viper.ReadInConfig()
+	v.SetConfigType("yaml")
+	v.SetConfigFile(defaultConfig)
+	err := v.ReadInConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
-	err = viper.Unmarshal(&config)
+	err = v.Unmarshal(&config)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling config file: %w", err)
 	}
@@ -49,12 +51,22 @@ func NewDefaultConfig() (*Config, error) {
 }
 
 func SaveLastIdConfig(id int) error {
-	viper.Set("last", id)
-	return viper.WriteConfig()
+	v := viper.New()
+	v.SetConfigType("yaml")
+	v.SetConfigFile(defaultCountConfig)
+	v.Set("last", id)
+	return v.WriteConfig()
 }
 
 func (c *Config) GetLastKnowId() int {
-	return viper.GetInt("last")
+	v := viper.New()
+	v.SetConfigType("yaml")
+	v.SetConfigFile(defaultCountConfig)
+	err := v.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("error reading config file: %w", err))
+	}
+	return v.GetInt("last")
 }
 
 func (c *Config) GetLogLevel() string {
