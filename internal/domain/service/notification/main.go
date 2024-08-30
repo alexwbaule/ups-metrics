@@ -34,10 +34,10 @@ func (g *GetNotification) Run(ctx context.Context) error {
 
 	for {
 		select {
-		case <-ticker.C:
 		case <-ctx.Done():
 			g.log.Infof("stopping get notifications job...")
 			return context.Canceled
+		case <-ticker.C:
 		}
 		err := g.getStats(ctx)
 		if err != nil {
