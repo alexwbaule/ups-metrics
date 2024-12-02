@@ -1,4 +1,4 @@
-package influx
+package influxdb
 
 var UPSMetricName = func(code string) string {
 	status := map[string]string{

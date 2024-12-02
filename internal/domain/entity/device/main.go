@@ -3,20 +3,38 @@ package device
 import "time"
 
 type Config struct {
-	Device `mapstructure:"device"`
-	Influx `mapstructure:"influxdb"`
-	Gelf   `mapstructure:"gelf"`
+	Device  `mapstructure:"device"`
+	Logs    `mapstructure:"logs"`
+	Metrics `mapstructure:"metrics"`
 }
+
+type Logs struct {
+	Gelf `mapstructure:"gelf"`
+}
+
+type Metrics struct {
+	Influx     `mapstructure:"influxdb"`
+	Prometheus `mapstructure:"prometheus"`
+}
+
 type Gelf struct {
 	Address string `mapstructure:"address"`
 	Port    string `mapstructure:"port"`
 }
 
+type Prometheus struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Port    string `mapstructure:"port"`
+	Path    string `mapstructure:"path"`
+}
+
 type Influx struct {
+	Enabled  bool   `mapstructure:"enabled"`
 	Address  string `mapstructure:"address"`
 	Port     string `mapstructure:"port"`
 	Database string `mapstructure:"database"`
 }
+
 type Device struct {
 	Interval time.Duration `mapstructure:"interval"`
 	Address  string        `mapstructure:"address"`
@@ -24,6 +42,7 @@ type Device struct {
 	Login    `mapstructure:"login"`
 	Http     `mapstructure:"http"`
 }
+
 type Http struct {
 	HttpClient `mapstructure:"client"`
 }

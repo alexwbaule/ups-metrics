@@ -80,12 +80,12 @@ func (c *Config) GetLogin() device.Login {
 	return c.device.Login
 }
 
-func (c *Config) GetMetricConfig() device.Influx {
-	return c.device.Influx
+func (c *Config) GetMetricConfig() device.Metrics {
+	return c.device.Metrics
 }
 
 func (c *Config) GetGelfConfig() device.Gelf {
-	return c.device.Gelf
+	return c.device.Logs.Gelf
 }
 
 func (c *Config) GetDeviceAddress() string {

@@ -5,7 +5,7 @@ device:
     username: admin
     password: 123456
 influxdb:
-  address: example.influx
+  address: example.ups_metrics
   port: 8086
   database: ups
 gelf:
