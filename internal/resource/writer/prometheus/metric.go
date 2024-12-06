@@ -44,37 +44,37 @@ var (
 			Namespace: "ups",
 			Name:      "battery_status",
 			Help:      "The battery status of the UPS",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"Nobreak": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "nobreak_status",
 			Help:      "The nobreak status of the UPS",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"Rede Eletrica": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "power_from",
 			Help:      "The power source of the UPS",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"Teste": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "test",
 			Help:      "The test status of the UPS (running or not)",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"Boost": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "boost",
 			Help:      "The boost status of the UPS (running or not)",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"ByPass": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "bypass",
 			Help:      "The bypass status of the UPS (active or inactive)",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 		"Potencia Elevada": promauto.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "ups",
 			Name:      "overload",
 			Help:      "The overload status of the UPS ",
-		}, []string{"host"}),
+		}, []string{"host", "status"}),
 	}
 )
 
@@ -115,6 +115,40 @@ var UPSMetricStateValue = func(code string, value bool) float64 {
 		"Potencia Elevada": {
 			true:  1.0,
 			false: 0.0,
+		},
+	}
+	return status[code][value]
+}
+
+var UPSMetricStateLabel = func(code string, value bool) string {
+	status := map[string]map[bool]string{
+		"Carga da Bateria": {
+			true:  "ok",
+			false: "fail",
+		},
+		"Nobreak": {
+			true:  "fail",
+			false: "ok",
+		},
+		"Rede Eletrica": {
+			true:  "grid",
+			false: "battery",
+		},
+		"Teste": {
+			true:  "on",
+			false: "off",
+		},
+		"Boost": {
+			true:  "on",
+			false: "off",
+		},
+		"ByPass": {
+			true:  "on",
+			false: "off",
+		},
+		"Potencia Elevada": {
+			true:  "true",
+			false: "false",
 		},
 	}
 	return status[code][value]
