@@ -1,7 +1,5 @@
 version: 2
 
-project_name: ups-metrics
-
 builds:
   - main: ./cmd/ups-metrics/main.go
   - env:
