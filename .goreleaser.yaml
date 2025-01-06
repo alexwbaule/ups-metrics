@@ -1,6 +1,6 @@
 version: 2
 
-project_name: supply-chain-example
+project_name: ups-metrics
 
 builds:
   - main: ./cmd/ups-metrics/main.go
