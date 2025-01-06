@@ -1,0 +1,25 @@
+version: 2
+
+project_name: supply-chain-example
+
+builds:
+  - main: ./cmd/ups-metrics/main.go
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - freebsd
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # ensures mod timestamp to be the commit timestamp
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      # trims path
+      - -trimpath
+    ldflags:
+      # use commit date instead of current date as main.date
+      # only needed if you actually use those things in your main package, otherwise can be ignored.
+      - -s -w -X=github.com/alexwbaule/ups-metrics/internal/application/logger.Version=$(VERSION) -X=github.com/alexwbaule/ups-metrics/internal/application/logger.Build=$(BUILD)"
