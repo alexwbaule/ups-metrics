@@ -86,40 +86,6 @@ var UPSMetricState = func(code string) *prometheus.GaugeVec {
 	return MetricState[code]
 }
 
-var UPSMetricStateValue = func(code string, value bool) float64 {
-	status := map[string]map[bool]float64{
-		"Carga da Bateria": {
-			true:  1.0,
-			false: 0.0,
-		},
-		"Nobreak": {
-			true:  0.0,
-			false: 1.0,
-		},
-		"Rede Eletrica": {
-			true:  1.0,
-			false: 0.0,
-		},
-		"Teste": {
-			true:  1.0,
-			false: 0.0,
-		},
-		"Boost": {
-			true:  1.0,
-			false: 0.0,
-		},
-		"ByPass": {
-			true:  1.0,
-			false: 0.0,
-		},
-		"Potencia Elevada": {
-			true:  1.0,
-			false: 0.0,
-		},
-	}
-	return status[code][value]
-}
-
 var UPSMetricStateLabel = func(code string, value bool) string {
 	status := map[string]map[bool]string{
 		"Carga da Bateria": {

@@ -35,8 +35,10 @@ func (w *Prometheus) Write(ctx context.Context, metric device.Metric) error {
 
 	for _, state := range metric.States {
 		if UPSMetricState(state.Name) != nil {
-			UPSMetricState(state.Name).WithLabelValues(metric.DeployName, UPSMetricStateLabel(state.Name, state.Value)).Set(UPSMetricStateValue(state.Name, state.Value))
-			w.log.Infof("adding state %s -> %s -> %f to histogram", state.Name, UPSMetricStateLabel(state.Name, state.Value), UPSMetricStateValue(state.Name, state.Value))
+			UPSMetricState(state.Name).WithLabelValues(metric.DeployName, UPSMetricStateLabel(state.Name, !state.Value)).Set(0.0)
+			w.log.Infof("adding state reversed %s -> %s -> %f to gauge", state.Name, UPSMetricStateLabel(state.Name, !state.Value), 0.0)
+			UPSMetricState(state.Name).WithLabelValues(metric.DeployName, UPSMetricStateLabel(state.Name, state.Value)).Set(1.0)
+			w.log.Infof("adding state %s -> %s -> %f to gauge", state.Name, UPSMetricStateLabel(state.Name, state.Value), 1.0)
 		}
 	}
 	return nil

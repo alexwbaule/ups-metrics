@@ -18,6 +18,8 @@ func main() {
 	app.Run(func(ctx context.Context) error {
 		app.Log.Infof("Device Interval: %+v", app.Config.GetInterval())
 
+		app.Log.SetLevel(app.Config.GetLogLevel())
+
 		sms := smsups.MewSMSUPS(app)
 		err := sms.Login(ctx, 1)
 		if err != nil {
@@ -43,7 +45,7 @@ func main() {
 
 		g.Go(func() error {
 			http.Handle("/metrics", promhttp.Handler())
-			return http.ListenAndServe(":9100", nil)
+			return http.ListenAndServe(":"+app.Config.GetMetricConfig().Prometheus.Port, nil)
 		})
 		return g.Wait()
 	})
