@@ -9,7 +9,9 @@ type Config struct {
 }
 
 type Logs struct {
-	Gelf `mapstructure:"gelf"`
+	Type         string       `mapstructure:"type"` // "gelf" or "victorialogs"
+	Gelf         Gelf         `mapstructure:"gelf"`
+	VictoriaLogs VictoriaLogs `mapstructure:"victorialogs"`
 }
 
 type Metrics struct {
@@ -20,6 +22,14 @@ type Metrics struct {
 type Gelf struct {
 	Address string `mapstructure:"address"`
 	Port    string `mapstructure:"port"`
+}
+
+type VictoriaLogs struct {
+	Address  string        `mapstructure:"address"`
+	Port     string        `mapstructure:"port"`
+	Username string        `mapstructure:"username"`
+	Password string        `mapstructure:"password"`
+	Timeout  time.Duration `mapstructure:"timeout"`
 }
 
 type Prometheus struct {

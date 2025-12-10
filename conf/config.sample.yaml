@@ -1,13 +1,25 @@
 device:
-  interval: 10s
-  address: example.ups
-  login:
-    username: admin
-    password: 123456
-influxdb:
-  address: example.ups_metrics
-  port: 8086
-  database: ups
-gelf:
-  address: example.graylog
-  port: 12201
+    address: ups-storage
+    interval: 10s
+    log: debug
+    login:
+        password: 123456
+        username: admin
+    http:
+        client:
+            dial_timeout: 5s
+logs:
+    gelf:
+        address: graylog
+        port: 12201
+
+metrics:
+    influxdb:
+        enabled: false
+        address: influx
+        database: UPS
+        port: 8086
+    prometheus:
+        enabled: true
+        path: /metrics
+        port: 9110

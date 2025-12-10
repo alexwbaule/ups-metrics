@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/alexwbaule/ups-metrics/internal/domain/entity/device"
 	"github.com/spf13/viper"
-	"time"
 )
 
 var (
@@ -86,6 +87,18 @@ func (c *Config) GetMetricConfig() device.Metrics {
 
 func (c *Config) GetGelfConfig() device.Gelf {
 	return c.device.Logs.Gelf
+}
+
+func (c *Config) GetLogType() string {
+	return c.device.Logs.Type
+}
+
+func (c *Config) GetVictoriaLogsConfig() device.VictoriaLogs {
+	return c.device.Logs.VictoriaLogs
+}
+
+func (c *Config) GetLogsConfig() device.Logs {
+	return c.device.Logs
 }
 
 func (c *Config) GetDeviceAddress() string {
