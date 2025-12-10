@@ -11,7 +11,7 @@
   - **Property 2: Writer factory correctness**
   - **Validates: Requirements 1.2**
 
-- [-] 2. Extend configuration model for log type switch
+- [x] 2. Extend configuration model for log type switch
   - Add Type field to Logs struct with "gelf" or "victorialogs" values
   - Add VictoriaLogs struct to device.Config with address, port, username, password, timeout fields
   - Update Logs struct to include VictoriaLogs configuration
@@ -27,7 +27,7 @@
   - **Property 15: Explicit type requirement**
   - **Validates: Requirements 5.1**
 
-- [ ] 3. Implement VictoriaLogs writer adapter
+- [x] 3. Implement VictoriaLogs writer adapter
   - Create VictoriaLogs writer struct implementing LogWriter interface
   - Implement WriteLog method with HTTP API calls to VictoriaLogs
   - Add JSON formatting for structured logs with required fields
@@ -35,26 +35,26 @@
   - Create git commit: "feat: implement VictoriaLogs writer adapter with HTTP API integration"
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ] 3.1 Write property test for JSON structure
+- [x] 3.1 Write property test for JSON structure
   - **Property 6: JSON structure completeness**
   - **Validates: Requirements 3.1**
 
-- [ ] 3.2 Write property test for notification field preservation
+- [x] 3.2 Write property test for notification field preservation
   - **Property 7: Notification field preservation**
   - **Validates: Requirements 3.2**
 
-- [ ] 3.3 Write property test for API error resilience
+- [x] 3.3 Write property test for API error resilience
   - **Property 9: API error resilience**
   - **Validates: Requirements 3.4**
 
-- [ ] 4. Refactor existing Graylog writer to implement LogWriter interface
+- [-] 4. Refactor existing Graylog writer to implement LogWriter interface
   - Modify Gelf struct to implement LogWriter interface
   - Update LogNotifications method to use new WriteLog signature
   - Ensure backwards compatibility with existing functionality
   - Create git commit: "refactor: update Graylog writer to implement LogWriter interface"
   - _Requirements: 2.4, 5.1_
 
-- [ ] 4.1 Write property test for field naming consistency
+- [x] 4.1 Write property test for field naming consistency
   - **Property 8: Field naming consistency**
   - **Validates: Requirements 3.3**
 
