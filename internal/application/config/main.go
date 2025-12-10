@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/alexwbaule/ups-metrics/internal/domain/entity/device"
@@ -24,7 +26,8 @@ var (
 )
 
 type Config struct {
-	device *device.Config
+	device       *device.Config
+	stateManager *StateManager
 }
 
 const defaultConfig = `conf/config.yaml`
@@ -46,28 +49,56 @@ func NewDefaultConfig() (*Config, error) {
 	}
 	setDefaults(&config)
 
+	// Initialize state manager
+	stateManager := NewStateManager()
+	if err := stateManager.LoadState(); err != nil {
+		return nil, fmt.Errorf("error loading application state: %w", err)
+	}
+
 	return &Config{
-		device: &config,
+		device:       &config,
+		stateManager: stateManager,
 	}, err
 }
 
+// SaveLastIdConfig saves the last notification ID (legacy function for backward compatibility)
 func SaveLastIdConfig(id int) error {
 	v := viper.New()
 	v.SetConfigType("yaml")
 	v.SetConfigFile(defaultCountConfig)
+
+	// Try to read existing config first to preserve other settings
+	_ = v.ReadInConfig() // Ignore error if file doesn't exist
+
 	v.Set("last", id)
-	return v.WriteConfig()
+	v.Set("updated_at", time.Now().Format(time.RFC3339))
+
+	// Ensure directory exists
+	dir := filepath.Dir(defaultCountConfig)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Try SafeWriteConfig first, fallback to WriteConfig
+	if err := v.SafeWriteConfig(); err != nil {
+		// If file exists, WriteConfig will update it
+		return v.WriteConfig()
+	}
+	return nil
 }
 
 func (c *Config) GetLastKnowId() int {
-	v := viper.New()
-	v.SetConfigType("yaml")
-	v.SetConfigFile(defaultCountConfig)
-	err := v.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("error reading config file: %w", err))
-	}
-	return v.GetInt("last")
+	return c.stateManager.GetLastNotificationId()
+}
+
+// UpdateLastNotificationId updates the last notification ID and saves state
+func (c *Config) UpdateLastNotificationId(id int) error {
+	return c.stateManager.UpdateLastNotificationId(id)
+}
+
+// SaveState saves the current application state
+func (c *Config) SaveState() error {
+	return c.stateManager.SaveState()
 }
 
 func (c *Config) GetLogLevel() string {

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/alexwbaule/ups-metrics/internal/application"
-	"github.com/alexwbaule/ups-metrics/internal/application/config"
 	"github.com/alexwbaule/ups-metrics/internal/domain/service/metric"
 	"github.com/alexwbaule/ups-metrics/internal/domain/service/notification"
 	"github.com/alexwbaule/ups-metrics/internal/resource/smsups"
@@ -59,7 +58,8 @@ func main() {
 
 		g.Go(func() error {
 			<-ctx.Done()
-			return config.SaveLastIdConfig(notif.LastId())
+			// Use the new state management API for better reliability
+			return app.Config.UpdateLastNotificationId(notif.LastId())
 		})
 
 		g.Go(func() error {
