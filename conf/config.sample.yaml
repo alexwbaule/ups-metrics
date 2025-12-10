@@ -9,9 +9,16 @@ device:
         client:
             dial_timeout: 5s
 logs:
+    type: "gelf"  # REQUIRED: "gelf" or "victorialogs"
     gelf:
         address: graylog
         port: 12201
+    victorialogs:
+        address: victoria-logs
+        port: 9428
+        username: admin
+        password: secret
+        timeout: 30s
 
 metrics:
     influxdb:

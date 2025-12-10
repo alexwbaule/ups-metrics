@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [-] 1. Create domain ports and interfaces
+- [x] 1. Create domain ports and interfaces
   - Define LogWriter interface with WriteLog and Close methods
   - Create LogEntry struct with timestamp, level, message, source, and metadata fields
   - Define LogWriterFactory interface for creating writers based on configuration
@@ -11,7 +11,7 @@
   - **Property 2: Writer factory correctness**
   - **Validates: Requirements 1.2**
 
-- [ ] 2. Extend configuration model for log type switch
+- [-] 2. Extend configuration model for log type switch
   - Add Type field to Logs struct with "gelf" or "victorialogs" values
   - Add VictoriaLogs struct to device.Config with address, port, username, password, timeout fields
   - Update Logs struct to include VictoriaLogs configuration
@@ -19,11 +19,11 @@
   - Create git commit: "feat: add log type switch and VictoriaLogs configuration model"
   - _Requirements: 1.1, 5.1_
 
-- [ ] 2.1 Write property test for configuration parsing
+- [x] 2.1 Write property test for configuration parsing
   - **Property 1: Configuration parsing completeness**
   - **Validates: Requirements 1.1**
 
-- [ ] 2.2 Write property test for explicit type requirement
+- [x] 2.2 Write property test for explicit type requirement
   - **Property 15: Explicit type requirement**
   - **Validates: Requirements 5.1**
 
