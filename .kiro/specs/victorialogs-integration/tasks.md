@@ -155,7 +155,7 @@
   - **Property 18: Deployment compatibility**
   - **Validates: Requirements 5.4**
 
-- [-] 11. Final integration testing and validation
+- [ ] 11. Final integration testing and validation
   - Test complete log flow from notification to VictoriaLogs
   - Validate writer selection logic with different configuration scenarios
   - Verify explicit error handling when log_type is missing or invalid
