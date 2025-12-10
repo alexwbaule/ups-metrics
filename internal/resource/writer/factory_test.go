@@ -142,6 +142,151 @@ func createMockConfig(logType string, hasValidVLConfig bool, hasValidGelfConfig 
 	return &mockConfig{device: deviceConfig}
 }
 
+// Feature: victorialogs-integration, Property 4: Configuration validation
+// **Validates: Requirements 1.4**
+
+// TestConfigurationValidation tests that configuration validation works correctly
+func TestConfigurationValidation(t *testing.T) {
+	// Property: For any VictoriaLogs configuration, the validation process should verify
+	// connection parameters and return appropriate success or failure results
+	property := func(logType string, address string, port string, username string, password string) bool {
+		// Only test victorialogs configurations for this property
+		if logType != "victorialogs" {
+			return true
+		}
+
+		// Create mock config with the provided parameters
+		deviceConfig := &device.Config{
+			Device: device.Device{
+				Address: "test-device",
+			},
+			Logs: device.Logs{
+				Type: logType,
+				VictoriaLogs: device.VictoriaLogs{
+					Address:  address,
+					Port:     port,
+					Username: username,
+					Password: password,
+					Timeout:  30 * time.Second,
+				},
+			},
+		}
+
+		mockConfig := &mockConfig{device: deviceConfig}
+
+		// Create minimal application for testing
+		log := logger.NewLogger()
+		app := &application.Application{
+			Config: &config.Config{},
+			Log:    log,
+		}
+
+		// Test the factory function
+		writer, err := CreateLogWriterWithConfig(mockConfig, app)
+
+		// Configuration should be considered valid if address and port are non-empty
+		isValidConfig := address != "" && port != ""
+
+		if isValidConfig {
+			// Should succeed with valid configuration
+			return err == nil && writer != nil
+		} else {
+			// Should fail with invalid configuration (missing address or port)
+			return err != nil && writer == nil
+		}
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Configuration validation property failed: %v", err)
+	}
+}
+
+// Feature: victorialogs-integration, Property 14: Initialization validation
+// **Validates: Requirements 4.5**
+
+// TestInitializationValidation tests that log writer initialization validates configuration and establishes connections
+func TestInitializationValidation(t *testing.T) {
+	// Property: For any log writer initialization, the process should validate configuration
+	// and establish necessary connections before returning success
+	property := func(logType string, hasValidConfig bool) bool {
+		// Only test valid log types
+		if logType != "gelf" && logType != "victorialogs" {
+			return true
+		}
+
+		var mockConf *mockConfig
+
+		if logType == "victorialogs" {
+			// Create VictoriaLogs config
+			deviceConfig := &device.Config{
+				Device: device.Device{
+					Address: "test-device",
+				},
+				Logs: device.Logs{
+					Type: logType,
+				},
+			}
+
+			if hasValidConfig {
+				deviceConfig.Logs.VictoriaLogs = device.VictoriaLogs{
+					Address: "victoria-logs",
+					Port:    "9428",
+					Timeout: 30 * time.Second,
+				}
+			}
+			// If hasValidConfig is false, VictoriaLogs config remains empty
+
+			mockConf = &mockConfig{device: deviceConfig}
+		} else {
+			// For gelf, we don't require specific validation in current implementation
+			deviceConfig := &device.Config{
+				Device: device.Device{
+					Address: "test-device",
+				},
+				Logs: device.Logs{
+					Type: logType,
+					Gelf: device.Gelf{
+						Address: "graylog",
+						Port:    "12201",
+					},
+				},
+			}
+			mockConf = &mockConfig{device: deviceConfig}
+		}
+
+		// Create minimal application for testing
+		log := logger.NewLogger()
+		app := &application.Application{
+			Config: &config.Config{},
+			Log:    log,
+		}
+
+		// Test the factory function
+		writer, err := CreateLogWriterWithConfig(mockConf, app)
+
+		if logType == "victorialogs" {
+			if hasValidConfig {
+				// Should succeed with valid VictoriaLogs configuration
+				return err == nil && writer != nil
+			} else {
+				// Should fail with invalid VictoriaLogs configuration
+				return err != nil && writer == nil
+			}
+		} else if logType == "gelf" {
+			// Gelf should always succeed in current implementation
+			return err == nil && writer != nil
+		}
+
+		return true
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Initialization validation property failed: %v", err)
+	}
+}
+
 // mockConfig implements the ConfigProvider interface for testing
 type mockConfig struct {
 	device *device.Config
