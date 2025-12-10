@@ -47,7 +47,7 @@
   - **Property 9: API error resilience**
   - **Validates: Requirements 3.4**
 
-- [-] 4. Refactor existing Graylog writer to implement LogWriter interface
+- [x] 4. Refactor existing Graylog writer to implement LogWriter interface
   - Modify Gelf struct to implement LogWriter interface
   - Update LogNotifications method to use new WriteLog signature
   - Ensure backwards compatibility with existing functionality
@@ -58,14 +58,14 @@
   - **Property 8: Field naming consistency**
   - **Validates: Requirements 3.3**
 
-- [ ] 5. Create log writer switch logic
+- [-] 5. Create log writer switch logic
   - Implement switch logic based on log_type configuration field
   - "gelf" → create GraylogWriter, "victorialogs" → create VictoriaLogsWriter
   - Invalid or missing log_type → return explicit error
   - Create git commit: "feat: implement log writer switch based on configuration type"
   - _Requirements: 1.2, 1.4_
 
-- [ ] 5.1 Write property test for switch-based destination selection
+- [x] 5.1 Write property test for switch-based destination selection
   - **Property 3: Switch-based destination selection**
   - **Validates: Requirements 1.2**
 
