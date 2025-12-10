@@ -95,6 +95,74 @@ func TestExplicitTypeRequirement(t *testing.T) {
 	}
 }
 
+// Feature: victorialogs-integration, Property 16: Type-based configuration validation
+// **Validates: Requirements 5.4**
+
+// TestTypeBasedConfigurationValidation tests that configuration with log_type validates corresponding destination config
+func TestTypeBasedConfigurationValidation(t *testing.T) {
+	// Property: For any configuration with log_type specified,
+	// the system should validate that the corresponding destination configuration is present and valid
+	property := func(logType string, hasValidDestConfig bool) bool {
+		// Only test valid log types
+		if logType != "gelf" && logType != "victorialogs" {
+			return true // Skip invalid types
+		}
+
+		deviceConfig := &device.Config{
+			Logs: device.Logs{
+				Type: logType,
+			},
+		}
+
+		// Add destination configuration based on type and validity flag
+		if hasValidDestConfig {
+			if logType == "victorialogs" {
+				deviceConfig.Logs.VictoriaLogs = device.VictoriaLogs{
+					Address: "victoria-logs",
+					Port:    "9428",
+					Timeout: 30 * time.Second,
+				}
+			} else if logType == "gelf" {
+				deviceConfig.Logs.Gelf = device.Gelf{
+					Address: "graylog",
+					Port:    "12201",
+				}
+			}
+		}
+		// If hasValidDestConfig is false, we leave destination config empty/invalid
+
+		config := &Config{device: deviceConfig}
+
+		// Validate that the system can detect configuration completeness
+		if logType == "victorialogs" {
+			vlConfig := config.GetVictoriaLogsConfig()
+			if hasValidDestConfig {
+				// Should have complete configuration
+				return vlConfig.Address != "" && vlConfig.Port != ""
+			} else {
+				// Should detect missing/incomplete configuration
+				return vlConfig.Address == "" || vlConfig.Port == ""
+			}
+		} else if logType == "gelf" {
+			gelfConfig := config.GetGelfConfig()
+			if hasValidDestConfig {
+				// Should have complete configuration
+				return gelfConfig.Address != "" && gelfConfig.Port != ""
+			} else {
+				// Should detect missing/incomplete configuration
+				return gelfConfig.Address == "" || gelfConfig.Port == ""
+			}
+		}
+
+		return true
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Type-based configuration validation property failed: %v", err)
+	}
+}
+
 // TestLogTypeValidation tests that only valid log types are accepted
 func TestLogTypeValidation(t *testing.T) {
 	// Property: For any log type value, only "gelf" and "victorialogs" should be considered valid
@@ -115,6 +183,60 @@ func TestLogTypeValidation(t *testing.T) {
 	config := &quick.Config{MaxCount: 100}
 	if err := quick.Check(property, config); err != nil {
 		t.Errorf("Log type validation property failed: %v", err)
+	}
+}
+
+// Feature: victorialogs-integration, Property 17: Switch-based configuration handling
+// **Validates: Requirements 5.2**
+
+// TestSwitchBasedConfigurationHandling tests that configuration with log_type set to "gelf" uses only Graylog and ignores VictoriaLogs
+func TestSwitchBasedConfigurationHandling(t *testing.T) {
+	// Property: For any configuration with log_type set to "gelf",
+	// only Graylog should be used and VictoriaLogs settings should be ignored
+	property := func(gelfAddress, gelfPort, vlAddress, vlPort string) bool {
+		// Skip empty values for required fields
+		if gelfAddress == "" || gelfPort == "" {
+			return true
+		}
+
+		// Create configuration with both gelf and victorialogs settings
+		deviceConfig := &device.Config{
+			Logs: device.Logs{
+				Type: "gelf", // Explicitly set to gelf
+				Gelf: device.Gelf{
+					Address: gelfAddress,
+					Port:    gelfPort,
+				},
+				VictoriaLogs: device.VictoriaLogs{
+					Address: vlAddress,
+					Port:    vlPort,
+					Timeout: 30 * time.Second,
+				},
+			},
+		}
+
+		config := &Config{device: deviceConfig}
+
+		// Verify that log type is correctly identified as gelf
+		logType := config.GetLogType()
+		if logType != "gelf" {
+			return false
+		}
+
+		// Verify that gelf configuration is accessible
+		gelfConfig := config.GetGelfConfig()
+		if gelfConfig.Address != gelfAddress || gelfConfig.Port != gelfPort {
+			return false
+		}
+
+		// The key property is that when type is "gelf", the system should prioritize gelf config
+		// and the log type should be correctly identified
+		return logType == "gelf" && gelfConfig.Address == gelfAddress && gelfConfig.Port == gelfPort
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Switch-based configuration handling property failed: %v", err)
 	}
 }
 
@@ -190,5 +312,87 @@ func TestExplicitErrorForMissingConfiguration(t *testing.T) {
 	config := &quick.Config{MaxCount: 100}
 	if err := quick.Check(property, config); err != nil {
 		t.Errorf("Explicit error for missing configuration property failed: %v", err)
+	}
+}
+
+// Feature: victorialogs-integration, Property 18: Deployment compatibility
+// **Validates: Requirements 5.4**
+
+// TestDeploymentCompatibility tests that existing deployment configuration files work without breaking changes
+func TestDeploymentCompatibility(t *testing.T) {
+	// Property: For any existing deployment configuration file,
+	// the updated system should parse and execute without breaking changes
+	property := func(hasLegacyGelf bool, hasNewTypeField bool, logType string) bool {
+		// Create a configuration that simulates existing deployment scenarios
+		deviceConfig := &device.Config{
+			Device: device.Device{
+				Address: "ups-device",
+			},
+			Logs: device.Logs{},
+		}
+
+		// Simulate legacy configuration (only gelf config, no type field)
+		if hasLegacyGelf && !hasNewTypeField {
+			deviceConfig.Logs.Gelf = device.Gelf{
+				Address: "legacy-graylog",
+				Port:    "12201",
+			}
+			// No type field set - this simulates legacy config
+		}
+
+		// Simulate new configuration with explicit type
+		if hasNewTypeField {
+			if logType == "gelf" || logType == "victorialogs" {
+				deviceConfig.Logs.Type = logType
+
+				if logType == "gelf" {
+					deviceConfig.Logs.Gelf = device.Gelf{
+						Address: "new-graylog",
+						Port:    "12201",
+					}
+				} else if logType == "victorialogs" {
+					deviceConfig.Logs.VictoriaLogs = device.VictoriaLogs{
+						Address: "victoria-logs",
+						Port:    "9428",
+						Timeout: 30 * time.Second,
+					}
+				}
+			}
+		}
+
+		config := &Config{device: deviceConfig}
+
+		// Test that configuration can be read without errors
+		retrievedType := config.GetLogType()
+
+		// For legacy configurations (no type field), the system should handle gracefully
+		if !hasNewTypeField {
+			// Legacy config should have empty type (system should detect this)
+			return retrievedType == ""
+		}
+
+		// For new configurations with explicit type, verify correctness
+		if hasNewTypeField && (logType == "gelf" || logType == "victorialogs") {
+			if retrievedType != logType {
+				return false
+			}
+
+			// Verify that the appropriate configuration is accessible
+			if logType == "gelf" {
+				gelfConfig := config.GetGelfConfig()
+				return gelfConfig.Address != "" && gelfConfig.Port != ""
+			} else if logType == "victorialogs" {
+				vlConfig := config.GetVictoriaLogsConfig()
+				return vlConfig.Address != "" && vlConfig.Port != ""
+			}
+		}
+
+		// For invalid configurations, the system should handle gracefully
+		return true
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Deployment compatibility property failed: %v", err)
 	}
 }

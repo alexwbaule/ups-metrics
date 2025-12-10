@@ -9,16 +9,23 @@ device:
         client:
             dial_timeout: 5s
 logs:
-    type: "gelf"  # REQUIRED: "gelf" or "victorialogs"
+    # REQUIRED: Explicit log type switch - must be "gelf" or "victorialogs"
+    # - "gelf": Send logs to Graylog using GELF protocol
+    # - "victorialogs": Send logs to VictoriaLogs using HTTP API
+    type: "gelf"
+    
+    # Graylog configuration (used when type: "gelf")
     gelf:
         address: graylog
         port: 12201
+    
+    # VictoriaLogs configuration (used when type: "victorialogs")
     victorialogs:
         address: victoria-logs
         port: 9428
-        username: admin
-        password: secret
-        timeout: 30s
+        username: admin      # Optional: HTTP basic auth username
+        password: secret     # Optional: HTTP basic auth password
+        timeout: 30s         # Optional: HTTP request timeout
 
 metrics:
     influxdb:
