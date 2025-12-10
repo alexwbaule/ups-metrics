@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/alexwbaule/ups-metrics/internal/application"
 	"github.com/alexwbaule/ups-metrics/internal/application/config"
 	"github.com/alexwbaule/ups-metrics/internal/domain/service/metric"
 	"github.com/alexwbaule/ups-metrics/internal/domain/service/notification"
 	"github.com/alexwbaule/ups-metrics/internal/resource/smsups"
+	"github.com/alexwbaule/ups-metrics/internal/resource/writer"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/sync/errgroup"
-	"net/http"
 )
 
 func main() {
@@ -25,8 +27,16 @@ func main() {
 		if err != nil {
 			return err
 		}
+
+		// Create log writer using factory
+		logWriter, err := writer.CreateLogWriter(app)
+		if err != nil {
+			app.Log.Errorf("failed to create log writer: %s", err)
+			return err
+		}
+
 		metrics := metric.NewMetric(app, sms)
-		notif := notification.NewGetNotification(app, sms)
+		notif := notification.NewGetNotification(app.Log, app.Config, sms, logWriter)
 
 		g, ctx := errgroup.WithContext(ctx)
 
