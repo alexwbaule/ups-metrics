@@ -1,39 +1,92 @@
+# UPS Metrics Configuration File
+# This file configures the UPS monitoring service with log destinations and metrics collection
+
 device:
-    address: ups-storage
-    interval: 10s
-    log: debug
+    address: ups-storage        # UPS device hostname or IP address
+    interval: 10s              # Polling interval for UPS metrics
+    log: debug                 # Log level: debug, info, warn, error
     login:
-        password: 123456
-        username: admin
+        password: 123456       # UPS device login password
+        username: admin        # UPS device login username
     http:
         client:
-            dial_timeout: 5s
+            dial_timeout: 5s   # HTTP client connection timeout
 logs:
     # REQUIRED: Explicit log type switch - must be "gelf" or "victorialogs"
+    # This field is mandatory and determines which log destination to use
     # - "gelf": Send logs to Graylog using GELF protocol
     # - "victorialogs": Send logs to VictoriaLogs using HTTP API
     type: "gelf"
     
     # Graylog configuration (used when type: "gelf")
+    # Only used when logs.type is set to "gelf"
     gelf:
-        address: graylog
-        port: 12201
+        address: graylog        # Graylog server hostname or IP
+        port: 12201            # GELF UDP port (default: 12201)
     
     # VictoriaLogs configuration (used when type: "victorialogs")
-    victorialogs:
-        address: victoria-logs
-        port: 9428
-        username: admin      # Optional: HTTP basic auth username
-        password: secret     # Optional: HTTP basic auth password
-        timeout: 30s         # Optional: HTTP request timeout
+    # Only used when logs.type is set to "victorialogs"
+    # Uncomment and configure when using VictoriaLogs
+    # victorialogs:
+    #     address: victoria-logs    # REQUIRED: VictoriaLogs server hostname or IP
+    #     port: 9428              # REQUIRED: VictoriaLogs HTTP port (default: 9428)
+    #     username: admin         # Optional: HTTP basic auth username
+    #     password: secret        # Optional: HTTP basic auth password (required if username is set)
+    #     timeout: 30s           # Optional: HTTP request timeout (default: 30s, minimum: 1s)
+
+# Example configurations for different scenarios:
+
+# Configuration for Graylog (GELF):
+# logs:
+#     type: "gelf"
+#     gelf:
+#         address: graylog.example.com
+#         port: 12201
+
+# Configuration for VictoriaLogs without authentication:
+# logs:
+#     type: "victorialogs"
+#     victorialogs:
+#         address: victoria-logs.example.com
+#         port: 9428
+#         timeout: 30s
+
+# Configuration for VictoriaLogs with authentication:
+# logs:
+#     type: "victorialogs"
+#     victorialogs:
+#         address: victoria-logs.example.com
+#         port: 9428
+#         username: monitoring_user
+#         password: secure_password
+#         timeout: 45s
+
+# Configuration for local development:
+# logs:
+#     type: "victorialogs"
+#     victorialogs:
+#         address: localhost
+#         port: 9428
+
+# IMPORTANT CONFIGURATION NOTES:
+# 1. The 'logs.type' field is MANDATORY and must be explicitly set
+# 2. Only the configuration for the selected type will be used
+# 3. If logs.type is "gelf", VictoriaLogs settings are ignored
+# 4. If logs.type is "victorialogs", Graylog settings are ignored
+# 5. Missing or invalid logs.type will cause the application to fail at startup
+# 6. Both username and password must be provided together for VictoriaLogs auth
+# 7. Timeout should be at least 1 second for reliable operation
 
 metrics:
+    # InfluxDB configuration for time-series metrics storage
     influxdb:
-        enabled: false
-        address: influx
-        database: UPS
-        port: 8086
+        enabled: false         # Enable/disable InfluxDB metrics export
+        address: influx        # InfluxDB server hostname or IP
+        database: UPS          # InfluxDB database name
+        port: 8086            # InfluxDB HTTP port (default: 8086)
+    
+    # Prometheus configuration for metrics exposition
     prometheus:
-        enabled: true
-        path: /metrics
-        port: 9110
+        enabled: true          # Enable/disable Prometheus metrics endpoint
+        path: /metrics         # Metrics endpoint path (default: /metrics)
+        port: 9110            # Prometheus metrics server port
