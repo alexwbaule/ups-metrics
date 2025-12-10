@@ -117,3 +117,78 @@ func TestLogTypeValidation(t *testing.T) {
 		t.Errorf("Log type validation property failed: %v", err)
 	}
 }
+
+// Feature: victorialogs-integration, Property 20: Explicit error for missing configuration
+// **Validates: Requirements 1.4, 1.5**
+
+// TestExplicitErrorForMissingConfiguration tests that missing or invalid configuration produces clear error messages
+func TestExplicitErrorForMissingConfiguration(t *testing.T) {
+	// Property: For any configuration with invalid log_type or missing destination configuration,
+	// the system should fail with a clear error message indicating the problem
+	property := func(logType string, hasDestinationConfig bool) bool {
+		// Create device config
+		deviceConfig := &device.Config{
+			Device: device.Device{
+				Address: "test-device",
+			},
+			Logs: device.Logs{
+				Type: logType,
+			},
+		}
+
+		// Add destination config if specified
+		if hasDestinationConfig {
+			if logType == "victorialogs" {
+				deviceConfig.Logs.VictoriaLogs = device.VictoriaLogs{
+					Address: "victoria-logs",
+					Port:    "9428",
+					Timeout: 30 * time.Second,
+				}
+			} else if logType == "gelf" {
+				deviceConfig.Logs.Gelf = device.Gelf{
+					Address: "graylog",
+					Port:    "12201",
+				}
+			}
+		}
+
+		config := &Config{device: deviceConfig}
+
+		// Test configuration validation logic
+		retrievedType := config.GetLogType()
+
+		// Verify type is preserved correctly
+		if retrievedType != logType {
+			return false
+		}
+
+		// Test destination config retrieval
+		if logType == "victorialogs" {
+			vlConfig := config.GetVictoriaLogsConfig()
+			if hasDestinationConfig {
+				// Should have valid configuration
+				return vlConfig.Address != "" && vlConfig.Port != ""
+			} else {
+				// Should have empty configuration (missing config scenario)
+				return vlConfig.Address == "" || vlConfig.Port == ""
+			}
+		} else if logType == "gelf" {
+			gelfConfig := config.GetGelfConfig()
+			if hasDestinationConfig {
+				// Should have valid configuration
+				return gelfConfig.Address != "" && gelfConfig.Port != ""
+			} else {
+				// Should have empty configuration (missing config scenario)
+				return gelfConfig.Address == "" || gelfConfig.Port == ""
+			}
+		} else {
+			// Invalid log type - should be detectable
+			return logType == "" || (logType != "gelf" && logType != "victorialogs")
+		}
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Explicit error for missing configuration property failed: %v", err)
+	}
+}

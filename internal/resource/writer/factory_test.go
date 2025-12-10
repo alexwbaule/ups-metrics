@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"strings"
 	"testing"
 	"testing/quick"
 	"time"
@@ -321,5 +322,94 @@ func (c *mockConfig) GetHttpClient() device.HttpClient {
 		RetryCount:            3,
 		RetryWaitCount:        100 * time.Millisecond,
 		RetryMaxWaitTime:      500 * time.Millisecond,
+	}
+}
+
+// Feature: victorialogs-integration, Property 19: Validation error clarity
+// **Validates: Requirements 5.5**
+
+// TestValidationErrorClarity tests that invalid VictoriaLogs configuration produces clear error messages
+func TestValidationErrorClarity(t *testing.T) {
+	// Property: For any invalid VictoriaLogs configuration, the validation error message should clearly indicate the specific configuration problem
+	property := func(address string, port string, logType string) bool {
+		// Only test victorialogs configurations for this property
+		if logType != "victorialogs" {
+			return true
+		}
+
+		// Create mock config with potentially invalid parameters
+		deviceConfig := &device.Config{
+			Device: device.Device{
+				Address: "test-device",
+			},
+			Logs: device.Logs{
+				Type: logType,
+				VictoriaLogs: device.VictoriaLogs{
+					Address:  address,
+					Port:     port,
+					Username: "test-user",
+					Password: "test-pass",
+					Timeout:  30 * time.Second,
+				},
+			},
+		}
+
+		mockConfig := &mockConfig{device: deviceConfig}
+
+		// Create minimal application for testing
+		log := logger.NewLogger()
+		app := &application.Application{
+			Config: &config.Config{},
+			Log:    log,
+		}
+
+		// Test the factory function
+		writer, err := CreateLogWriterWithConfig(mockConfig, app)
+
+		// Determine if configuration is valid
+		isValidConfig := address != "" && port != ""
+
+		if isValidConfig {
+			// Should succeed with valid configuration
+			return err == nil && writer != nil
+		} else {
+			// Should fail with invalid configuration and provide clear error message
+			if err == nil || writer != nil {
+				return false
+			}
+
+			errorMsg := err.Error()
+
+			// Verify error message clarity - should mention specific missing fields
+			if address == "" {
+				if !strings.Contains(errorMsg, "address") && !strings.Contains(errorMsg, "Address") {
+					return false
+				}
+				if !strings.Contains(errorMsg, "required") {
+					return false
+				}
+			}
+
+			if port == "" {
+				if !strings.Contains(errorMsg, "port") && !strings.Contains(errorMsg, "Port") {
+					return false
+				}
+				if !strings.Contains(errorMsg, "required") {
+					return false
+				}
+			}
+
+			// Error message should mention victorialogs context
+			if !strings.Contains(errorMsg, "victorialogs") && !strings.Contains(errorMsg, "VictoriaLogs") {
+				return false
+			}
+
+			return true
+		}
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Validation error clarity property failed: %v", err)
 	}
 }

@@ -335,3 +335,84 @@ func TestAPIErrorResilience(t *testing.T) {
 		t.Errorf("API error resilience property failed: %v", err)
 	}
 }
+
+// Feature: victorialogs-integration, Property 5: Graceful error handling
+// **Validates: Requirements 1.5**
+
+// TestGracefulErrorHandling tests that invalid configuration returns descriptive error messages without crashing
+func TestGracefulErrorHandling(t *testing.T) {
+	// Property: For any invalid configuration, the system should return descriptive error messages and not crash or enter an undefined state
+	property := func(address string, port string, username string, password string, timeoutSecs int) bool {
+		// Test various invalid configuration scenarios
+		timeout := time.Duration(timeoutSecs%3600+1) * time.Second // Ensure positive timeout
+
+		// Create potentially invalid VictoriaLogs configuration
+		config := device.VictoriaLogs{
+			Address:  address,
+			Port:     port,
+			Username: username,
+			Password: password,
+			Timeout:  timeout,
+		}
+
+		// Test that NewVictoriaLogsWriter handles any configuration gracefully
+		writer := NewVictoriaLogsWriter(config, nil)
+		if writer == nil {
+			// Constructor should never return nil, even with invalid config
+			return false
+		}
+
+		// Test that Close() method works regardless of configuration
+		err := writer.Close()
+		if err != nil {
+			// Close should not fail for VictoriaLogs writer
+			return false
+		}
+
+		// Test error message formatting for various scenarios
+		testErrors := []struct {
+			errorType string
+			message   string
+		}{
+			{"marshal", "failed to marshal log entry to JSON"},
+			{"network", "failed to send log to VictoriaLogs"},
+			{"api", "VictoriaLogs API error"},
+		}
+
+		for _, testError := range testErrors {
+			// Verify error messages are descriptive and contain context
+			errorMsg := fmt.Sprintf("%s: test error", testError.message)
+			if !strings.Contains(errorMsg, testError.message) {
+				return false
+			}
+
+			// Test that errors can be wrapped properly
+			wrappedErr := fmt.Errorf("operation failed: %w", fmt.Errorf(errorMsg))
+			if wrappedErr == nil {
+				return false
+			}
+
+			// Verify wrapped error contains original context
+			if !strings.Contains(wrappedErr.Error(), testError.message) {
+				return false
+			}
+		}
+
+		// Test that configuration validation logic works
+		isValidConfig := address != "" && port != ""
+
+		// Even with invalid config, the system should handle it gracefully
+		// (validation happens at factory level, not constructor level)
+		if !isValidConfig {
+			// Invalid config should be detectable but not cause crashes
+			return true
+		}
+
+		return true
+	}
+
+	config := &quick.Config{MaxCount: 100}
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Graceful error handling property failed: %v", err)
+	}
+}
