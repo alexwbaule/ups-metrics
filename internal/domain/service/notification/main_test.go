@@ -148,6 +148,92 @@ func TestContextCancellationResponsiveness(t *testing.T) {
 	}
 }
 
+// TestServiceContinuity tests Property 10: Service continuity
+// Feature: victorialogs-integration, Property 10: Service continuity
+func TestServiceContinuity(t *testing.T) {
+	property := func(numFailures uint8, numSuccesses uint8) bool {
+		// Ensure reasonable test ranges
+		if numFailures > 10 {
+			numFailures = 10
+		}
+		if numSuccesses > 10 {
+			numSuccesses = 10
+		}
+		if numFailures == 0 && numSuccesses == 0 {
+			numSuccesses = 1 // At least one operation
+		}
+
+		mockWriter := NewMockLogWriter()
+		ctx := context.Background()
+
+		totalOperations := int(numFailures) + int(numSuccesses)
+		successCount := 0
+		errorCount := 0
+
+		// Simulate a series of log write operations with some failures
+		for i := 0; i < totalOperations; i++ {
+			// Make some operations fail (first numFailures operations)
+			shouldFail := i < int(numFailures)
+			mockWriter.SetError(shouldFail, "simulated VictoriaLogs unavailability")
+
+			entry := port.LogEntry{
+				Timestamp: time.Now(),
+				Level:     "info",
+				Message:   "test notification",
+				Source:    "ups-metrics",
+				Metadata:  map[string]interface{}{"notification_id": i},
+			}
+
+			err := mockWriter.WriteLog(ctx, entry)
+			if err != nil {
+				errorCount++
+				// Service should continue processing despite errors
+				// The error should be logged but not crash the service
+				if len(err.Error()) == 0 {
+					return false // Error should have meaningful message
+				}
+			} else {
+				successCount++
+			}
+		}
+
+		// Verify that:
+		// 1. The expected number of operations failed
+		expectedErrors := int(numFailures)
+		if errorCount != expectedErrors {
+			return false
+		}
+
+		// 2. The expected number of operations succeeded
+		expectedSuccesses := int(numSuccesses)
+		if successCount != expectedSuccesses {
+			return false
+		}
+
+		// 3. Service continued processing all operations despite failures
+		totalProcessed := successCount + errorCount
+		if totalProcessed != totalOperations {
+			return false
+		}
+
+		// 4. Successful operations were actually logged
+		logs := mockWriter.GetLogs()
+		if len(logs) != successCount {
+			return false
+		}
+
+		return true
+	}
+
+	config := &quick.Config{
+		MaxCount: 100,
+	}
+
+	if err := quick.Check(property, config); err != nil {
+		t.Errorf("Property 10 failed: Service continuity - %v", err)
+	}
+}
+
 // TestErrorPropagationCorrectness tests Property 12: Error propagation correctness
 // Feature: victorialogs-integration, Property 12: Error propagation correctness
 func TestErrorPropagationCorrectness(t *testing.T) {

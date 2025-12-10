@@ -35,6 +35,15 @@ func main() {
 			return err
 		}
 
+		// Ensure graceful shutdown of log writer when context is done
+		defer func() {
+			if logWriter != nil {
+				if closeErr := logWriter.Close(); closeErr != nil {
+					app.Log.Errorf("error closing log writer during shutdown: %s", closeErr)
+				}
+			}
+		}()
+
 		metrics := metric.NewMetric(app, sms)
 		notif := notification.NewGetNotification(app.Log, app.Config, sms, logWriter)
 
