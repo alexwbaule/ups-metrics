@@ -58,11 +58,12 @@
   - **Property 8: Field naming consistency**
   - **Validates: Requirements 3.3**
 
-- [-] 5. Create log writer switch logic
+- [x] 5. Create log writer switch logic
   - Implement switch logic based on log_type configuration field
   - "gelf" → create GraylogWriter, "victorialogs" → create VictoriaLogsWriter
   - Invalid or missing log_type → return explicit error
   - Create git commit: "feat: implement log writer switch based on configuration type"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 1.2, 1.4_
 
 - [x] 5.1 Write property test for switch-based destination selection
@@ -75,6 +76,7 @@
   - Fail with clear error when log_type is invalid or destination config is missing
   - Add configuration validation and connection testing
   - Create git commit: "feat: implement log writer factory with mandatory type switch"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 1.4, 4.5, 5.1_
 
 - [ ] 6.1 Write property test for configuration validation
@@ -90,6 +92,7 @@
   - Update notification processing to use WriteLog method instead of direct Graylog calls
   - Ensure proper error handling and context cancellation support
   - Create git commit: "refactor: update notification service to use dependency injection for log writers"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 2.3, 4.2, 4.3_
 
 - [ ] 7.1 Write property test for context cancellation
@@ -105,6 +108,7 @@
   - Update notification service initialization with proper dependency injection
   - Ensure graceful shutdown of log writers
   - Create git commit: "feat: integrate new log writer architecture in main application"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 1.2, 2.3_
 
 - [ ] 8.1 Write property test for service continuity
@@ -116,6 +120,7 @@
   - Add circuit breaker pattern for failing destinations
   - Enhance error logging and monitoring capabilities
   - Create git commit: "feat: add comprehensive error handling and resilience patterns"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 1.5, 3.5_
 
 - [ ] 9.1 Write property test for graceful error handling
@@ -135,6 +140,7 @@
   - Document the explicit switch mechanism: logs.type = "gelf" | "victorialogs"
   - Update README with VictoriaLogs integration instructions and migration guide
   - Create git commit: "docs: add log type switch and VictoriaLogs configuration examples"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 1.1, 5.4_
 
 - [ ] 10.1 Write property test for type-based configuration validation
@@ -155,4 +161,5 @@
   - Verify explicit error handling when log_type is missing or invalid
   - Ensure all tests pass, ask the user if questions arise
   - Create git commit: "test: add integration tests and validate complete log flow"
+  - **IMPORTANTE: Use git add EXPLÍCITO para arquivos específicos, NUNCA use `git add .`**
   - _Requirements: 5.1, 5.2, 5.4_
