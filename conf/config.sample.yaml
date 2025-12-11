@@ -26,6 +26,7 @@ logs:
     
     # VictoriaLogs configuration (used when type: "victorialogs")
     # Only used when logs.type is set to "victorialogs"
+    # Stream fields (app_name, hostname, remote_ip) are automatically detected
     # Uncomment and configure when using VictoriaLogs
     # victorialogs:
     #     address: victoria-logs    # REQUIRED: VictoriaLogs server hostname or IP
@@ -76,6 +77,9 @@ logs:
 # 5. Missing or invalid logs.type will cause the application to fail at startup
 # 6. Both username and password must be provided together for VictoriaLogs auth
 # 7. Timeout should be at least 1 second for reliable operation
+# 8. VictoriaLogs stream fields (app_name, hostname, remote_ip) are automatically detected
+#    from the system (executable name, hostname, and primary network interface)
+# 9. No manual configuration needed for stream fields - they help organize logs automatically
 
 metrics:
     # InfluxDB configuration for time-series metrics storage

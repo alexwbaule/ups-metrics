@@ -21,6 +21,7 @@ type VictoriaLogsWriter struct {
 	baseURL        string
 	retryConfig    resilience.RetryConfig
 	circuitBreaker *resilience.CircuitBreaker
+	streamFields   StreamFields // Automatically detected stream fields
 }
 
 // NewVictoriaLogsWriter creates a new VictoriaLogs writer instance
@@ -46,6 +47,7 @@ func NewVictoriaLogsWriter(config device.VictoriaLogs, httpClient *client.Client
 		baseURL:        baseURL,
 		retryConfig:    retryConfig,
 		circuitBreaker: circuitBreaker,
+		streamFields:   DetectStreamFields(), // Automatically detect stream fields
 	}
 }
 
@@ -69,6 +71,11 @@ func (w *VictoriaLogsWriter) writeLogInternal(ctx context.Context, entry port.Lo
 		"source":  entry.Source,
 		"_msg":    entry.Message, // VictoriaLogs uses _msg as the main message field
 	}
+
+	// Add VictoriaLogs stream fields (automatically detected for proper log organization)
+	logData["app_name"] = w.streamFields.AppName
+	logData["hostname"] = w.streamFields.Hostname
+	logData["remote_ip"] = w.streamFields.RemoteIP
 
 	// Add metadata fields
 	for key, value := range entry.Metadata {

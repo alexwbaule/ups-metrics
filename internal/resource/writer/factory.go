@@ -86,6 +86,9 @@ func validateVictoriaLogsConfig(config device.VictoriaLogs) error {
 		errors = append(errors, "both username and password must be provided together, or both left empty")
 	}
 
+	// Note: Stream fields (app_name, hostname, remote_ip) are automatically detected
+	// No validation needed as they are generated at runtime
+
 	// Return combined error if any validation failed
 	if len(errors) > 0 {
 		return fmt.Errorf("VictoriaLogs configuration errors: %s", joinErrors(errors))

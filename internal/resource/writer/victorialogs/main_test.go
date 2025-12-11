@@ -3,6 +3,7 @@ package victorialogs
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 	"testing/quick"
@@ -414,5 +415,57 @@ func TestGracefulErrorHandling(t *testing.T) {
 	config := &quick.Config{MaxCount: 100}
 	if err := quick.Check(property, config); err != nil {
 		t.Errorf("Graceful error handling property failed: %v", err)
+	}
+}
+
+// TestStreamFieldsDetection tests the automatic detection of stream fields
+func TestStreamFieldsDetection(t *testing.T) {
+	// Test that stream fields are automatically detected
+	streamFields := DetectStreamFields()
+
+	// Verify that all fields are detected and not empty
+	if streamFields.AppName == "" {
+		t.Error("DetectStreamFields should return a non-empty app_name")
+	}
+	if streamFields.Hostname == "" {
+		t.Error("DetectStreamFields should return a non-empty hostname")
+	}
+	if streamFields.RemoteIP == "" {
+		t.Error("DetectStreamFields should return a non-empty remote_ip")
+	}
+
+	// Verify that app_name doesn't contain path separators (should be just the executable name)
+	if strings.Contains(streamFields.AppName, "/") || strings.Contains(streamFields.AppName, "\\") {
+		t.Errorf("app_name should not contain path separators, got: %s", streamFields.AppName)
+	}
+
+	// Verify that remote_ip looks like an IP address
+	if net.ParseIP(streamFields.RemoteIP) == nil {
+		t.Errorf("remote_ip should be a valid IP address, got: %s", streamFields.RemoteIP)
+	}
+
+	t.Logf("Detected stream fields - app_name: %s, hostname: %s, remote_ip: %s",
+		streamFields.AppName, streamFields.Hostname, streamFields.RemoteIP)
+}
+
+// TestVictoriaLogsWriterWithAutoDetection tests that VictoriaLogs writer includes auto-detected stream fields
+func TestVictoriaLogsWriterWithAutoDetection(t *testing.T) {
+	config := device.VictoriaLogs{
+		Address: "test-server",
+		Port:    "9428",
+		Timeout: 30 * time.Second,
+	}
+
+	writer := NewVictoriaLogsWriter(config, nil)
+
+	// Verify that stream fields were auto-detected during writer creation
+	if writer.streamFields.AppName == "" {
+		t.Error("VictoriaLogs writer should have auto-detected app_name")
+	}
+	if writer.streamFields.Hostname == "" {
+		t.Error("VictoriaLogs writer should have auto-detected hostname")
+	}
+	if writer.streamFields.RemoteIP == "" {
+		t.Error("VictoriaLogs writer should have auto-detected remote_ip")
 	}
 }
