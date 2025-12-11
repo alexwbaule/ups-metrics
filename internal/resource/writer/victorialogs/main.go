@@ -93,7 +93,10 @@ func (w *VictoriaLogsWriter) writeLogInternal(ctx context.Context, entry port.Lo
 	req := client.Request{
 		Url: "/insert/jsonline",
 		Headers: map[string]string{
-			"Content-Type": "application/json",
+			"Content-Type":     "application/json",
+			"VL-Msg-Field":     "_msg",
+			"VL-Time-Field":    "_time",
+			"VL-Stream-Fields": "app_name,hostname,remote_ip",
 		},
 	}
 

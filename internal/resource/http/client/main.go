@@ -3,13 +3,15 @@ package client
 import (
 	"context"
 	"crypto/tls"
-	"github.com/alexwbaule/ups-metrics/internal/application/config"
-	"github.com/alexwbaule/ups-metrics/internal/application/logger"
-	"github.com/go-resty/resty/v2"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/alexwbaule/ups-metrics/internal/application/config"
+	"github.com/alexwbaule/ups-metrics/internal/application/logger"
+	"github.com/go-resty/resty/v2"
 )
 
 type Request struct {
@@ -59,6 +61,20 @@ func New(cfg *config.Config, baseUrl string, l *logger.Logger) *Client {
 				response.StatusCode() >= http.StatusInternalServerError ||
 				response.StatusCode() == http.StatusGatewayTimeout ||
 				err != nil
+		}).
+		OnBeforeRequest(func(c *resty.Client, req *resty.Request) error {
+			debug := fmt.Sprintf("curl -X %s \"%s\" ", req.Method, req.URL)
+			for s, header := range req.Header {
+				if s == "User-Agent" {
+					continue
+				}
+				debug += fmt.Sprintf("--header \"%s: %s\" ", s, header[0])
+			}
+			if req.Method == http.MethodPost {
+				debug += fmt.Sprintf("--data \" %s\" ", req.Body)
+			}
+			l.Debug(debug)
+			return nil // Continue with the request
 		}).
 		SetRetryMaxWaitTime(cfg.GetHttpClient().RetryMaxWaitTime)
 
