@@ -36,7 +36,7 @@ func (w *Prometheus) Write(ctx context.Context, metric device.Metric) error {
 					value = 1
 				}
 				UPSMetricName.WithLabelValues(metric.DeployName, UPSMetricStatusLabel(gauge.Name), gauge.Unit).Set(value)
-				w.log.Infof("adding phase %s (%s) == %f to gauge", gauge.Name, gauge.Phases.Value, s)
+				w.log.Infof("adding phase %s (%s) == %f to gauge", gauge.Name, gauge.Phases.Value, value)
 			}
 		}
 	}
