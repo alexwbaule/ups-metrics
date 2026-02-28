@@ -13,19 +13,20 @@ var (
 		"Potencia de Saida":   "ups_load",
 		"Temperatura":         "ups_temperature",
 		"Frequencia de Saida": "output_frequency",
+		"Tipo":                "ups_is_interative",
 	}
 
 	states = map[string]string{
-		"Alerta 24h":       "alert_24h",
-		"UPS_Wifi":         "wifi_is_on",
-		"LED_RGB":          "rgb_is_on",
-		"Carga da Bateria": "battery_is_healthy",
-		"Nobreak":          "nobreak_is_healthy",
+		"Nobreak":          "battery_fail",
+		"Carga da Bateria": "battery_is_full",
 		"Rede Eletrica":    "on_grid",
 		"Teste":            "on_test",
+		"Alerta 24h":       "alert_24h",
 		"Boost":            "on_boost",
 		"ByPass":           "on_bypass",
 		"Potencia Elevada": "on_high_power",
+		"UPS_Wifi":         "is_wifi_ups",
+		"LED_RGB":          "have_rgb",
 	}
 )
 
