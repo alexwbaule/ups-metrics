@@ -6,116 +6,46 @@ import (
 )
 
 var (
-	MetricStatus = map[string]*prometheus.GaugeVec{
-		"Tensao de Entrada": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "input_voltage",
-			Help:      "The input voltage of the UPS",
-		}, []string{"host", "type", "unit"}),
-		"Tensao de Saida": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "output_voltage",
-			Help:      "The output voltage of the UPS",
-		}, []string{"host", "type", "unit"}),
-		"Nivel da Bateria": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "battery_level",
-			Help:      "The battery level of the UPS",
-		}, []string{"host", "type", "unit"}),
-		"Potencia de Saida": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "ups_load",
-			Help:      "The load of the UPS",
-		}, []string{"host", "type", "unit"}),
-		"Temperatura": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "ups_temperature",
-			Help:      "The temperature of the UPS",
-		}, []string{"host", "type", "unit"}),
-		"Frequencia de Saida": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "output_frequency",
-			Help:      "The output frequency of the UPS",
-		}, []string{"host", "type", "unit"}),
+	status = map[string]string{
+		"Tensao de Entrada":   "input_voltage",
+		"Tensao de Saida":     "output_voltage",
+		"Nivel da Bateria":    "battery_level",
+		"Potencia de Saida":   "ups_load",
+		"Temperatura":         "ups_temperature",
+		"Frequencia de Saida": "output_frequency",
 	}
 
-	MetricState = map[string]*prometheus.GaugeVec{
-		"Carga da Bateria": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "battery_status",
-			Help:      "The battery status of the UPS",
-		}, []string{"host", "status"}),
-		"Nobreak": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "nobreak_status",
-			Help:      "The nobreak status of the UPS",
-		}, []string{"host", "status"}),
-		"Rede Eletrica": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "power_from",
-			Help:      "The power source of the UPS",
-		}, []string{"host", "status"}),
-		"Teste": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "test",
-			Help:      "The test status of the UPS (running or not)",
-		}, []string{"host", "status"}),
-		"Boost": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "boost",
-			Help:      "The boost status of the UPS (running or not)",
-		}, []string{"host", "status"}),
-		"ByPass": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "bypass",
-			Help:      "The bypass status of the UPS (active or inactive)",
-		}, []string{"host", "status"}),
-		"Potencia Elevada": promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: "ups",
-			Name:      "overload",
-			Help:      "The overload status of the UPS ",
-		}, []string{"host", "status"}),
+	states = map[string]string{
+		"Carga da Bateria": "battery_is_healthy",
+		"Nobreak":          "nobreak_is_healthy",
+		"Rede Eletrica":    "on_grid",
+		"Teste":            "on_test",
+		"Boost":            "on_boost",
+		"ByPass":           "on_bypass",
+		"Potencia Elevada": "on_high_power",
 	}
 )
 
-var UPSMetricName = func(code string) *prometheus.GaugeVec {
-	return MetricStatus[code]
+var UPSMetricName = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "ups",
+	Name:      "status",
+	Help:      "The status of the UPS",
+}, []string{"host", "type", "unit"})
+
+var UPSMetricStatusLabel = func(code string) string {
+	return status[code]
 }
 
-var UPSMetricState = func(code string) *prometheus.GaugeVec {
-	return MetricState[code]
-}
+var UPSMetricState = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Namespace: "ups",
+	Name:      "state",
+	Help:      "The states of the UPS",
+}, []string{"host", "state"})
 
-var UPSMetricStateLabel = func(code string, value bool) string {
-	status := map[string]map[bool]string{
-		"Carga da Bateria": {
-			true:  "ok",
-			false: "fail",
-		},
-		"Nobreak": {
-			true:  "fail",
-			false: "ok",
-		},
-		"Rede Eletrica": {
-			true:  "grid",
-			false: "battery",
-		},
-		"Teste": {
-			true:  "on",
-			false: "off",
-		},
-		"Boost": {
-			true:  "on",
-			false: "off",
-		},
-		"ByPass": {
-			true:  "on",
-			false: "off",
-		},
-		"Potencia Elevada": {
-			true:  "true",
-			false: "false",
-		},
+var UPSMetricStateLabel = func(code string, value bool) (string, float64) {
+	var v float64
+	if value {
+		v = 1
 	}
-	return status[code][value]
+	return states[code], v
 }
