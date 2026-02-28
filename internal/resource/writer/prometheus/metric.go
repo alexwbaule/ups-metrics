@@ -16,6 +16,7 @@ var (
 	}
 
 	states = map[string]string{
+		"Alerta 24h":       "alert_24h",
 		"UPS_Wifi":         "wifi_is_on",
 		"LED_RGB":          "rgb_is_on",
 		"Carga da Bateria": "battery_is_healthy",
