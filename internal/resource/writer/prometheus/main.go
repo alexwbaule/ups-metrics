@@ -3,6 +3,7 @@ package prometheus
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/alexwbaule/ups-metrics/internal/application/config"
 	"github.com/alexwbaule/ups-metrics/internal/application/logger"
@@ -29,6 +30,15 @@ func (w *Prometheus) Write(ctx context.Context, metric device.Metric) error {
 		if s, err := strconv.ParseFloat(gauge.Phases.Value, 64); err == nil {
 			UPSMetricName.WithLabelValues(metric.DeployName, UPSMetricStatusLabel(gauge.Name), gauge.Unit).Set(s)
 			w.log.Infof("adding phase %s (%s) == %f to gauge", gauge.Name, gauge.Phases.Value, s)
+		} else {
+			if gauge.Name == "Tipo" {
+				var value float64
+				if strings.EqualFold(gauge.Phases.Value, "UPS Line Interative") {
+					value = 1
+				}
+				UPSMetricName.WithLabelValues(metric.DeployName, UPSMetricStatusLabel(gauge.Name), gauge.Unit).Set(value)
+				w.log.Infof("adding phase %s (%s) == %f to gauge", gauge.Name, gauge.Phases.Value, s)
+			}
 		}
 	}
 
