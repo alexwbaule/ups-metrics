@@ -32,11 +32,17 @@ func MewSMSUPS(l *application.Application) *SMSUps {
 }
 
 func (g *SMSUps) GetMeasurements(ctx context.Context) (device.Metric, error) {
-	return g.medidores(ctx, 1)
+	// Adiciona timeout de 30s para a requisição completa
+	reqCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	return g.medidores(reqCtx, 1)
 }
 
 func (g *SMSUps) GetNotifications(ctx context.Context) (device.Notifications, error) {
-	return g.notifications(ctx, 1)
+	// Adiciona timeout de 30s para a requisição completa
+	reqCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	return g.notifications(reqCtx, 1)
 }
 
 func (g *SMSUps) Login(ctx context.Context, retryCount int) error {
@@ -137,46 +143,58 @@ func (g *SMSUps) medidores(ctx context.Context, retryCount int) (device.Metric, 
 func (g *SMSUps) backoffNotification(ctx context.Context, retryCount int, err error) (device.Notifications, error) {
 	var urlError *url.Error
 
-	if retryCount == g.maxTry {
-		return device.Notifications{}, err
+	// Apenas 1 retry rápido - o ticker cuidará do resto
+	maxQuickRetries := 2
+	if retryCount >= maxQuickRetries {
+		return device.Notifications{}, fmt.Errorf("notification request failed after %d attempts: %w", retryCount, err)
 	}
+	
 	if errors.As(err, &urlError) {
 		if urlError.Timeout() {
-			g.log.Infof("Trying notification again (%d)(%d)...", retryCount, g.maxTry)
+			g.log.Warnf("Notification timeout, quick retry %d/%d", retryCount, maxQuickRetries)
+			time.Sleep(2 * time.Second) // Espera 2s antes do retry
 			return g.notifications(ctx, retryCount+1)
 		}
 	}
-	return device.Notifications{}, fmt.Errorf("max notification retry reached")
+	return device.Notifications{}, fmt.Errorf("notification request failed: %w", err)
 }
 
 func (g *SMSUps) backoffMetric(ctx context.Context, retryCount int, err error) (device.Metric, error) {
 	var urlError *url.Error
 
-	if retryCount == g.maxTry {
-		return device.Metric{}, err
+	// Apenas 1 retry rápido - o ticker cuidará do resto
+	maxQuickRetries := 2
+	if retryCount >= maxQuickRetries {
+		return device.Metric{}, fmt.Errorf("metric request failed after %d attempts: %w", retryCount, err)
 	}
+	
 	if errors.As(err, &urlError) {
 		if urlError.Timeout() {
-			g.log.Infof("Trying metric again (%d)(%d)...", retryCount, g.maxTry)
+			g.log.Warnf("Metric timeout, quick retry %d/%d", retryCount, maxQuickRetries)
+			time.Sleep(2 * time.Second) // Espera 2s antes do retry
 			return g.medidores(ctx, retryCount+1)
 		}
 	}
-	return device.Metric{}, fmt.Errorf("max metric retry reached")
+	return device.Metric{}, fmt.Errorf("metric request failed: %w", err)
 }
 
 func (g *SMSUps) backoffLogin(ctx context.Context, retryCount int, err error) error {
 	var urlError *url.Error
 
-	if retryCount == g.maxTry {
-		return err
+	// Apenas 1 retry rápido - o ticker cuidará do resto
+	maxQuickRetries := 2
+	if retryCount >= maxQuickRetries {
+		return fmt.Errorf("login failed after %d attempts: %w", retryCount, err)
 	}
+	
 	if errors.As(err, &urlError) {
 		if urlError.Timeout() {
-			g.log.Infof("Trying login again (%d)(%d)...", retryCount, g.maxTry)
+			g.log.Warnf("Login timeout, quick retry %d/%d", retryCount, maxQuickRetries)
+			time.Sleep(2 * time.Second) // Espera 2s antes do retry
 			return g.Login(ctx, retryCount+1)
 		}
 	}
-	return fmt.Errorf("max login retry reached")
+	return fmt.Errorf("login failed: %w", err)
 }
 
 func (g *SMSUps) print(get *client.Response) {

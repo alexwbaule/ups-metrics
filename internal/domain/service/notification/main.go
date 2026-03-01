@@ -41,8 +41,8 @@ func (g *GetNotification) Run(ctx context.Context) error {
 		}
 		err := g.getStats(ctx)
 		if err != nil {
-			g.log.Errorf("get notifications error: %s", err)
-			return err
+			g.log.Errorf("get notifications error: %s (will retry on next tick)", err)
+			continue // Não retorna erro, apenas continua no próximo tick
 		}
 	}
 }

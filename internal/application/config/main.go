@@ -12,14 +12,14 @@ var (
 	defaultMaxIdleConns          = 20
 	defaultMaxConnsPerHost       = 10
 	defaultMaxIdleConnsPerHost   = 10
-	defaultDialTimeout           = 500 * time.Millisecond
+	defaultDialTimeout           = 5 * time.Second      // Aumentado de 500ms
 	defaultDialKeepAlive         = 90 * time.Second
-	defaultResponseHeaderTimeout = 15 * time.Second
-	defaultTLSHandshakeTimeout   = 15 * time.Second
+	defaultResponseHeaderTimeout = 30 * time.Second     // Aumentado de 15s para API lenta
+	defaultTLSHandshakeTimeout   = 20 * time.Second     // Aumentado de 15s
 	defaultExpectContinueTimeout = 15 * time.Second
-	defaultRetryCount            = 3
-	defaultRetryWaitCount        = 100 * time.Millisecond
-	defaultRetryMaxWaitTime      = 500 * time.Millisecond
+	defaultRetryCount            = 2                    // Reduzido de 3 para 2 (total 2 tentativas)
+	defaultRetryWaitCount        = 1 * time.Second      // Aumentado de 100ms
+	defaultRetryMaxWaitTime      = 3 * time.Second      // Aumentado de 500ms
 )
 
 type Config struct {
